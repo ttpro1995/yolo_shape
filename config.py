@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # kích thước grid system
 cell_size = 7
 # số boundary box cần dự đoán mỗi ô vuông

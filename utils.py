@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
 ## slim là package đi kèm với tensorflow, giúp định nghĩa nhanh các loại mô hình deep learning
 import tensorflow.contrib.slim as slim
