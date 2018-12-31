@@ -40,7 +40,7 @@ if __name__ == "__main__":
     """
     define config at config.py
     """
-
+    init_meow_log_tool()
     print("start")
     print("meowwww")
 
