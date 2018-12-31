@@ -10,7 +10,7 @@ import json
 import numpy as np
 import cv2
 # thư viện hiển thị biểu đồ
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import time
 
 from config import *

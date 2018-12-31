@@ -10,7 +10,7 @@ import json
 import numpy as np
 import cv2
 # thư viện hiển thị biểu đồ
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import time
 
 from utils import *
@@ -25,7 +25,7 @@ from meowlogtool import log_util
 
 def init_meow_log_tool():
     # log to console and file
-    logger1 = log_util.create_logger("temp_file", print_console=True)
+    logger1 = log_util.create_logger("load.log", print_console=True)
     logger1.info("LOG_FILE")  # log using logger1
     # attach log to stdout (print function)
     s1 = log_util.StreamToLogger(logger1)
@@ -72,34 +72,22 @@ if __name__ == "__main__":
         # định nghĩa saver để lưu lại trọng số của mô hình, dùng trong test các ảnh mới
         saver = tf.train.Saver(max_to_keep=2)
 
-        for epoch in range(epochs):
-            start_time = time.time()
-            for batch in range(len(X_train) // batch_size):
-                # TODO
-                # lấy từng batch, forward, backward, cập nhật trọng số theo adam optimizer
+        saver.restore(sess, "./saved_1/yolo-91")
 
-                # X_batch = 0
-                # y_batch = 0
-                X_batch = X_train[batch * batch_size:(batch + 1) * batch_size]
-                y_batch = y_train[batch * batch_size:(batch + 1) * batch_size]
-                train_total_loss, train_iou_m, _ = sess.run([loss, iou_metric, train_op],
-                                                            {images: X_batch, labels: y_batch, is_training: True})
-            end_time = time.time()
+        # tính toán loss, iou trên tập validation
+        val_loss = []
+        val_iou_ms = []
+        for batch in range(len(X_test) // batch_size):
+            val_X_batch = X_test[batch * batch_size:(batch + 1) * batch_size]
+            val_y_batch = y_test[batch * batch_size:(batch + 1) * batch_size]
+            total_val_loss, val_iou_m, val_predict_object, val_predict_class, val_predict_normalized_box = sess.run(
+                [loss, iou_metric, predict_object, predict_class, predict_normalized_box],
+                {images: val_X_batch, labels: val_y_batch, is_training: False})
+            val_loss.append(total_val_loss)
+            val_iou_ms.append(val_iou_m)
 
-            # tính toán loss, iou trên tập validation
-            val_loss = []
-            val_iou_ms = []
-            for batch in range(len(X_test) // batch_size):
-                val_X_batch = X_test[batch * batch_size:(batch + 1) * batch_size]
-                val_y_batch = y_test[batch * batch_size:(batch + 1) * batch_size]
-                total_val_loss, val_iou_m, val_predict_object, val_predict_class, val_predict_normalized_box = sess.run(
-                    [loss, iou_metric, predict_object, predict_class, predict_normalized_box],
-                    {images: val_X_batch, labels: val_y_batch, is_training: False})
-                val_loss.append(total_val_loss)
-                val_iou_ms.append(val_iou_m)
-
-            saver.save(sess, './model/yolo', global_step=epoch)
-            print(
-                'epoch: {} - running_time: {:.0f}s - train_loss: {:.3f} - train_iou: {:.3f} - val_loss: {:.3f} - val_iou: {:.3f}'.format(
-                    epoch, end_time - start_time, train_total_loss, train_iou_m, np.mean(val_loss),
-                    np.mean(val_iou_ms)))
+        # saver.save(sess, './model/yolo', global_step=epoch)
+        print(
+            'val_loss: {:.3f} - val_iou: {:.3f}'.format(
+                  np.mean(val_loss),
+                np.mean(val_iou_ms)))
