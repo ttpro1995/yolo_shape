@@ -25,7 +25,7 @@ from meowlogtool import log_util
 
 def init_meow_log_tool():
     # log to console and file
-    logger1 = log_util.create_logger("temp_file", print_console=True)
+    logger1 = log_util.create_logger("meow.log", print_console=True)
     logger1.info("LOG_FILE")  # log using logger1
     # attach log to stdout (print function)
     s1 = log_util.StreamToLogger(logger1)
