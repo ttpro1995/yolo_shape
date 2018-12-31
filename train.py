@@ -72,7 +72,7 @@ if __name__ == "__main__":
         sess.run(tf.global_variables_initializer())
 
         # định nghĩa saver để lưu lại trọng số của mô hình, dùng trong test các ảnh mới
-        saver = tf.train.Saver(max_to_keep=2)
+        saver = tf.train.Saver(max_to_keep=10)
 
         for epoch in range(epochs):
             start_time = time.time()
