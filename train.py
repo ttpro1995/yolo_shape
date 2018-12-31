@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import tensorflow as tf
-## slim là package đi kèm với tensorflow, giúp định nghĩa nhanh các loại mô hình deep learning
+
 import tensorflow.contrib.slim as slim
 import tensorflow.contrib.slim.nets
 from tensorflow.contrib.slim.nets import vgg
-## sklearn là một thư viện rất phổ biến trong ML, chúng ta chỉ sử dụng tran_test_split để chia data thành 2 tập
+
 from sklearn.model_selection import train_test_split
 import json
-## thư viện tính toán trên matrix
+
 import numpy as np
 import cv2
-# thư viện hiển thị biểu đồ
+
 # import matplotlib.pyplot as plt
 import time
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # define graph
     graph = tf.Graph()
     with graph.as_default():
-        # None đại diện cho batch_size, giúp batch_size có thể thay đổi linh hoạt
+
         images = tf.placeholder("float", [None, img_size, img_size, 3], name="input")
         labels = tf.placeholder('float', [None, cell_size, cell_size, 8], name='label')
         is_training = tf.placeholder(tf.bool)
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         logits = vgg16(images, is_training)
         loss, iou_metric, predict_object, predict_class, predict_normalized_box = loss_layer(logits, labels)
 
-        # định nghĩa adam optimizer, để tối ưu hàm loss
+
         optimizer = tf.train.AdamOptimizer(lr)
         train_op = optimizer.minimize(loss)
 
@@ -72,14 +72,14 @@ if __name__ == "__main__":
     with tf.Session(graph=graph) as sess:
         sess.run(tf.global_variables_initializer())
 
-        # định nghĩa saver để lưu lại trọng số của mô hình, dùng trong test các ảnh mới
+
         saver = tf.train.Saver(max_to_keep=10)
 
         for epoch in range(epochs):
             start_time = time.time()
             for batch in range(len(X_train) // batch_size):
                 # TODO
-                # lấy từng batch, forward, backward, cập nhật trọng số theo adam optimizer
+
 
                 # X_batch = 0
                 # y_batch = 0
@@ -89,7 +89,7 @@ if __name__ == "__main__":
                                                             {images: X_batch, labels: y_batch, is_training: True})
             end_time = time.time()
 
-            # tính toán loss, iou trên tập validation
+            #  loss, iou  validation
             val_loss = []
             val_iou_ms = []
             for batch in range(len(X_test) // batch_size):
