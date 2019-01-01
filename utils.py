@@ -5,7 +5,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import tensorflow.contrib.slim.nets
 from tensorflow.contrib.slim.nets import vgg
-
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import json
 
@@ -205,3 +205,98 @@ def loss_layer(predicts, labels, scope='loss_layer'):
         loss = 0.5 * class_loss + object_loss + 0.1 * noobject_loss + 10 * box_loss
 
         return loss, iou_metric, predict_object, predict_class, predict_normalized_box
+
+
+def iou(box1, box2):
+    """ tính iou bằng numpy
+    Args:
+      box1: [center_x, center_y, w, h]
+      box2: [center_x, center_y, w, h]
+    Return:
+      iou: iou
+    """
+    tb = min(box1[0] + 0.5 * box1[2], box2[0] + 0.5 * box2[2]) - \
+         max(box1[0] - 0.5 * box1[2], box2[0] - 0.5 * box2[2])
+    lr = min(box1[1] + 0.5 * box1[3], box2[1] + 0.5 * box2[3]) - \
+         max(box1[1] - 0.5 * box1[3], box2[1] - 0.5 * box2[3])
+    inter = 0 if tb < 0 or lr < 0 else tb * lr
+    return inter / (box1[2] * box1[3] + box2[2] * box2[3] - inter)
+
+
+def interpret_output(predict_object, predict_class, predict_normalized_box):
+    # nhận lại img-size để ra không gian pixel
+    predict_box = predict_normalized_box * img_size
+    predict_object = np.expand_dims(predict_object, axis=-1)
+    predict_class = np.expand_dims(predict_class, axis=-2)
+    # xác suất ô boundary chứa class bằng boundary chứa object * xác suất có điều kiện của lớp đó mà ô vuông chứa object
+    class_probs = predict_object * predict_class
+
+    # giữ các boundary box mà có xác suất chứa lớp >= 0.2
+    filter_mat_probs = np.array(class_probs >= 0.2, dtype='bool')
+    filter_mat_boxes = np.nonzero(filter_mat_probs)
+    boxes_filtered = predict_box[filter_mat_boxes[0], filter_mat_boxes[1], filter_mat_boxes[2]]
+    class_probs_filtered = class_probs[filter_mat_probs]
+
+    # chọn index của lớp có xác xuất lớp nhất lại mỗi boundary box
+    classes_num_filtered = np.argmax(
+        filter_mat_probs, axis=3)[
+        filter_mat_boxes[0], filter_mat_boxes[1], filter_mat_boxes[2]]
+
+    # giữ lại boundary box dự đoán có xác xuất lớp nhất
+    argsort = np.array(np.argsort(class_probs_filtered))[::-1]
+    boxes_filtered = boxes_filtered[argsort]
+    class_probs_filtered = class_probs_filtered[argsort]
+    classes_num_filtered = classes_num_filtered[argsort]
+
+    # thuật toán non-maximun suppression
+    for i in range(len(boxes_filtered)):
+        if class_probs_filtered[i] == 0:
+            continue
+        for j in range(i + 1, len(boxes_filtered)):
+            if iou(boxes_filtered[i], boxes_filtered[j]) > 0.5:
+                class_probs_filtered[j] = 0.0
+
+    # filter bước cuối bỏ những boundary overlap theo thuật toán trên
+    filter_iou = np.array(class_probs_filtered > 0.0, dtype='bool')
+    boxes_filtered = boxes_filtered[filter_iou]
+    class_probs_filtered = class_probs_filtered[filter_iou]
+    classes_num_filtered = classes_num_filtered[filter_iou]
+
+    result = []
+    for i in range(len(boxes_filtered)):
+        result.append(
+            [classes_num_filtered[i],
+             boxes_filtered[i][0],
+             boxes_filtered[i][1],
+             boxes_filtered[i][2],
+             boxes_filtered[i][3],
+             class_probs_filtered[i]])
+
+    return result
+
+
+def draw_result(img, result):
+    """ hiển thị kết quả dự đoán
+    Args:
+      img: ảnh
+      result: giá trị sinh ra ở hàm trên
+    """
+    plt.figure(figsize=(10, 10), dpi=40)
+    img = np.pad(img, [(50, 50), (50, 50), (0, 0)], mode='constant', constant_values=255)
+    for i in range(len(result)):
+        x = int(result[i][1]) + 50
+        y = int(result[i][2]) + 50
+        w = int(result[i][3] / 2)
+        h = int(result[i][4] / 2)
+        cv2.rectangle(img, (x - w, y - h), (x + w, y + h), (231, 76, 60), 2)
+        cv2.rectangle(img, (x - w, y - h - 20),
+                      (x - w + 50, y - h), (46, 204, 113), -1)
+        cv2.putText(
+            img, '{} : {:.2f}'.format(result[i][0], result[i][5]),
+            (x - w + 5, y - h - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+            (0, 0, 0), 1, cv2.LINE_AA)
+
+    plt.imshow(img)
+    plt.imsave("output.png", img)
+    plt.xticks([])
+    plt.yticks([])

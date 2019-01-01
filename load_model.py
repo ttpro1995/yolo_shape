@@ -74,7 +74,7 @@ if __name__ == "__main__":
         # định nghĩa saver để lưu lại trọng số của mô hình, dùng trong test các ảnh mới
         saver = tf.train.Saver(max_to_keep=2)
 
-        saver.restore(sess, "./saved_1/yolo-91")
+        saver.restore(sess, "/data/yolo_shape_model/model_take_1/yolo-294")
 
         # tính toán loss, iou trên tập validation
         val_loss = []
@@ -93,3 +93,7 @@ if __name__ == "__main__":
             'val_loss: {:.3f} - val_iou: {:.3f}'.format(
                   np.mean(val_loss),
                 np.mean(val_iou_ms)))
+
+    img_idx = 1
+    result = interpret_output(val_predict_object[img_idx], val_predict_class[img_idx], val_predict_normalized_box[img_idx])
+    draw_result(val_X_batch[img_idx] * 255, result)
