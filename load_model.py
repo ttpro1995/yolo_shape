@@ -94,6 +94,14 @@ if __name__ == "__main__":
                   np.mean(val_loss),
                 np.mean(val_iou_ms)))
 
-    img_idx = 1
-    result = interpret_output(val_predict_object[img_idx], val_predict_class[img_idx], val_predict_normalized_box[img_idx])
-    draw_result(val_X_batch[img_idx] * 255, result)
+
+    for img_idx in range(100):
+        result = interpret_output(val_predict_object[img_idx], val_predict_class[img_idx],
+                                  val_predict_normalized_box[img_idx])
+        name = "output/output_" + str(img_idx) +".png"
+        # draw_result(val_X_batch[img_idx] * 255, result)
+        draw_result_with_name(val_X_batch[img_idx] * 255, result, name)
+
+    # img_idx = 1
+    # result = interpret_output(val_predict_object[img_idx], val_predict_class[img_idx], val_predict_normalized_box[img_idx])
+    # draw_result(val_X_batch[img_idx] * 255, result)

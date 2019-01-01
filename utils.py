@@ -274,6 +274,25 @@ def interpret_output(predict_object, predict_class, predict_normalized_box):
 
     return result
 
+def draw_result_with_name(img, result, name):
+    plt.figure(figsize=(10, 10), dpi=40)
+    img = np.pad(img, [(50, 50), (50, 50), (0, 0)], mode='constant', constant_values=255)
+    for i in range(len(result)):
+        x = int(result[i][1]) + 50
+        y = int(result[i][2]) + 50
+        w = int(result[i][3] / 2)
+        h = int(result[i][4] / 2)
+        cv2.rectangle(img, (x - w, y - h), (x + w, y + h), (231, 76, 60), 2)
+        cv2.rectangle(img, (x - w, y - h - 20),
+                      (x - w + 50, y - h), (46, 204, 113), -1)
+        cv2.putText(
+            img, '{} : {:.2f}'.format(result[i][0], result[i][5]),
+            (x - w + 5, y - h - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+            (0, 0, 0), 1, cv2.LINE_AA)
+
+    plt.imshow(img)
+    plt.imsave(name, img)
+    plt.clf()
 
 def draw_result(img, result):
     """ hiển thị kết quả dự đoán
